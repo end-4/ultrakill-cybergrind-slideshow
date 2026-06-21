@@ -12,11 +12,12 @@ public class ConfigManager {
         Random, Sequential
     }
 
-    public static readonly string ApplicationPath =
+    internal static readonly string ApplicationPath =
         Path.Combine(Directory.GetParent(Application.dataPath)?.FullName);
-    public static readonly string SkyboxesPath = Path.Combine(ApplicationPath, "Cybergrind", "Textures", "Skyboxes");
+    internal static readonly string SkyboxesPath = Path.Combine(ApplicationPath, "Cybergrind", "Textures", "Skyboxes");
+    internal static readonly string VolumetricSkyboxesPath = Path.Combine(ApplicationPath, "Cybergrind", "VolumetricSkyboxes");
 
-    public static PluginConfigurator config;
+    private static PluginConfigurator config;
     public static BoolField SkyboxEnabled;
     public static StringField SkyboxDir;
     public static EnumField<SelectionOrder> SkyboxChangeOrder;
