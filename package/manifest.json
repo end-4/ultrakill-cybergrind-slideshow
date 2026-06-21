@@ -1,0 +1,13 @@
+{
+    "name": "CybergrindSlideshow",
+    "author": "end_4",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/end-4/ultrakill-cybergrind-slideshow",
+    "description": "Changes the skybox every wave. Compatible-ish with VolumetricSkyboxes.",
+    "dependencies": [
+        "BepInEx-BepInExPack-5.4.2100",
+        "EternalsTeam-PluginConfigurator-1.10.2",
+        "end_4-Notiffy-0.1.2",
+        "Flazhik-VolumetricSkyboxes-1.0.0"
+    ]
+}
