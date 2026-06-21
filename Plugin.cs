@@ -27,7 +27,7 @@ public class Plugin : BaseUnityPlugin {
     public static string workingDir = Path.GetDirectoryName(workingPath);
     public const string PluginGUID = "com.github.end-4.cybergrindSlideshow";
     public const string PluginName = "CybergrindSlideshow";
-    public const string PluginVersion = "1.0.0";
+    public const string PluginVersion = "1.0.1";
 
     private void Awake() {
         Log = Logger;
