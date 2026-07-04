@@ -50,7 +50,7 @@ internal static class UserHints {
         Version lastVersion = new Version(ConfigManager.LastVersion.value);
         Version currVersion = new Version("1.1.0");
         if (currVersion.CompareTo(lastVersion) != 1) return;
-        ConfigManager.LastVersion.value = currVersion.ToString();
+        ConfigManager.LastVersion.value = Plugin.PluginVersion;
         if (Plugin.VolumetricAvailable) {
             notificationId = NotificationSystem.NotifySend("<color=#9ccaed>Cybergrind Slideshow</color>",
                 $"1. Default settings should work, but configuration and usage notes are in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>\n2. Would you like to enable Volumetric skyboxes support (might be inconsistent) and copy them to the slideshow folder?",
