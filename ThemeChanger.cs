@@ -75,12 +75,12 @@ public static class ThemeChanger {
         switch (selectionMode) {
             case ConfigManager.SelectionMode.Random:
                 fileIndex = UnityEngine.Random.Range(0, files.Count());
-                Plugin.Log.LogInfo($"Random index {fileIndex}");
+                // Plugin.Log.LogInfo($"Random index {fileIndex}");
                 break;
             case ConfigManager.SelectionMode.DeterministicSequential:
             default:
                 fileIndex = MonoSingleton<EndlessGrid>.Instance.currentWave % files.Count();
-                Plugin.Log.LogInfo($"Sequential index {fileIndex}");
+                // Plugin.Log.LogInfo($"Sequential index {fileIndex}");
                 break;
         }
 
@@ -103,12 +103,13 @@ public static class ThemeChanger {
         return SelectFile(folderPath, selectionMode, [".jpg", ".jpeg", ".png"]);
     }
 
-    private static string SelectMatchingFile(string basePath, string[] suffixes, string[] extensions) {
-        string baseName = Path.GetFileNameWithoutExtension(basePath);
+    private static string SelectMatchingFile(string searchDir, string baseFilePath, string[] suffixes, string[] extensions) {
+        string baseName = Path.GetFileNameWithoutExtension(baseFilePath);
 
         foreach (string suffix in suffixes) {
             foreach (string ext in extensions) {
-                string path = Path.Join(ConfigManager.GridDir.value, baseName + suffix + ext);
+                string path = Path.Join(searchDir, baseName + suffix + ext);
+                // Plugin.Log.LogInfo($"Check {path}");
                 if (File.Exists(path)) return path;
             }
         }
@@ -117,7 +118,7 @@ public static class ThemeChanger {
     }
 
     private static void ChangeSkybox(string filePath) {
-        Plugin.Log.LogInfo($"-- Changing skybox -> {filePath}");
+        Plugin.Log.LogInfo($"Skybox -> {filePath}");
         Material mat =
             ((OutdoorLightMaster)Object.FindObjectsOfType(typeof(OutdoorLightMaster))[0]).GetPrivate<Material>(
                 "skyboxMaterial");
@@ -146,7 +147,7 @@ public static class ThemeChanger {
             } catch (Exception e) {
             }
 
-            Plugin.Log.LogInfo($"Changed cached skybox color to {CachedSkyboxColor}");
+            // Plugin.Log.LogInfo($"Changed cached skybox color to {CachedSkyboxColor}");
         }
     }
 
@@ -178,14 +179,15 @@ public static class ThemeChanger {
     }
 
     private static void ChangeGlowTexture(string targetFile) {
+        Plugin.Log.LogInfo($"Glow   -> {targetFile}");
         ChangeTechnicalGridTexture([targetFile, targetFile, targetFile], "_EmissiveTex");
     }
 
     private static async void ChangeGrid(string skyboxFilePath) {
-        Plugin.Log.LogInfo($"-- Changing grid. [skybox={skyboxFilePath}]");
+        // Plugin.Log.LogInfo($"-- Changing grid. [skybox={skyboxFilePath}]");
         string targetFile;
         GridSet gridSet = new GridSet();
-        targetFile = SelectMatchingFile(skyboxFilePath,
+        targetFile = SelectMatchingFile(ConfigManager.GridDir.value, skyboxFilePath,
             ["", "base", "top", "topRow", "toprow", "_base", "_top", "_topRow", "_toprow"],
             [".jpg", ".jpeg", ".png"]);
         if (targetFile != "") {
@@ -203,15 +205,15 @@ public static class ThemeChanger {
                     // var targetColor = IsVolumetricSkybox(skyboxFilePath) ? CachedSkyboxColor : ImageUtils.GetDominantColor(skyboxFilePath);
                     // var targetColor = CachedSkyboxColor == Color.black ? ImageUtils.GetDominantColor(skyboxFilePath) : CachedSkyboxColor;
                     var targetColor = CachedSkyboxColor;
-                    Plugin.Log.LogInfo($"Target color: {targetColor}");
+                    // Plugin.Log.LogInfo($"Target color: {targetColor}");
                     var closestImage = ImageUtils.FindClosestColorImage(targetColor, ConfigManager.GridDir.value);
-                    Plugin.Log.LogInfo($"Closest image: {closestImage}");
+                    // Plugin.Log.LogInfo($"Closest image: {closestImage}");
                     gridSet = GridSet.FromSingleFile(closestImage);
                     break;
             }
         }
 
-        Plugin.Log.LogInfo($"Changing grid to {gridSet.Base}\n  + {gridSet.Top}\n  + {gridSet.TopRow}");
+        Plugin.Log.LogInfo($"Grid   -> {gridSet.Base}\n           + {gridSet.Top}\n           + {gridSet.TopRow}");
         ChangeGridTexture(gridSet);
     }
 
@@ -237,8 +239,9 @@ public static class ThemeChanger {
     }
 
     private static async void ChangeGlow(string skyboxFilePath) {
-        Plugin.Log.LogInfo($"-- Changing glow. [skybox={skyboxFilePath}]");
-        string targetFile = SelectMatchingFile(ConfigManager.GlowDir.value, [""], [".jpg", ".jpeg", ".png"]);
+        // Plugin.Log.LogInfo($"-- Changing glow. [skybox={skyboxFilePath}]");
+        string targetFile = SelectMatchingFile(ConfigManager.GlowDir.value, skyboxFilePath, [""], [".jpg", ".jpeg", ".png"]);
+        // Plugin.Log.LogInfo($"-- Matching target = {targetFile}");
         if (targetFile == "") {
             switch (ConfigManager.GlowSelectionMode.value) {
                 case ConfigManager.MonochromeSelectionMode.Independent:
