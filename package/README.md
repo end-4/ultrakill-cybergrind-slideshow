@@ -1,3 +1,6 @@
+<img alt="cybergrind_slideshow_thumbnail" src="https://github.com/user-attachments/assets/3fa1b441-23a9-4f4c-8a6f-406bc22ec478" />
+
+
 ## Features
 
 - Changes the skybox, grid, lighting, and glow pattern every wave
