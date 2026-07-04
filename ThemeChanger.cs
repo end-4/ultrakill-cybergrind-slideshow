@@ -36,17 +36,20 @@ public static class ThemeChanger {
             string fileExt = Path.GetExtension(filePath);
             string baseFileName = Path.GetFileNameWithoutExtension(filePath);
             string baseDir = Path.GetDirectoryName(filePath);
-            string baserName = Regex.Replace(baseFileName, @"(base|topRow|top)$", "");
+            string baserName = Regex.Replace(baseFileName, @"(base|topRow|toprow|top)$", "");
 
             string baseSuffixPath = Path.Join(baseDir, baserName + "base" + fileExt);
             string topSuffixPath = Path.Join(baseDir, baserName + "top" + fileExt);
             string topRowSuffixPath = Path.Join(baseDir, baserName + "topRow" + fileExt);
+            string lowerTopRowSuffixPath = Path.Join(baseDir, baserName + "toprow" + fileExt);
             string noSuffixPath = Path.Join(baseDir, baserName + fileExt);
 
             string fallbackPath = File.Exists(noSuffixPath) ? noSuffixPath : filePath;
             gs.Top = File.Exists(topSuffixPath) ? topSuffixPath : fallbackPath;
             gs.Base = File.Exists(baseSuffixPath) ? baseSuffixPath : fallbackPath;
-            gs.TopRow = File.Exists(topRowSuffixPath) ? topRowSuffixPath : fallbackPath;
+            gs.TopRow = File.Exists(topRowSuffixPath) ? topRowSuffixPath :
+                File.Exists(lowerTopRowSuffixPath) ? lowerTopRowSuffixPath :
+                fallbackPath;
             return gs;
         }
 
@@ -100,10 +103,8 @@ public static class ThemeChanger {
         return SelectFile(folderPath, selectionMode, [".jpg", ".jpeg", ".png"]);
     }
 
-    private static string SelectMatchingGridFile(string basePath) {
+    private static string SelectMatchingFile(string basePath, string[] suffixes, string[] extensions) {
         string baseName = Path.GetFileNameWithoutExtension(basePath);
-        string[] suffixes = { "", "base", "top", "topRow" };
-        string[] extensions = { ".jpg", ".jpeg", ".png" };
 
         foreach (string suffix in suffixes) {
             foreach (string ext in extensions) {
@@ -121,7 +122,8 @@ public static class ThemeChanger {
             ((OutdoorLightMaster)Object.FindObjectsOfType(typeof(OutdoorLightMaster))[0]).GetPrivate<Material>(
                 "skyboxMaterial");
         Material mat2 =
-            ((OutdoorLightMaster)Object.FindObjectsOfType(typeof(OutdoorLightMaster))[0]).GetPrivate<Material>("tempSkybox");
+            ((OutdoorLightMaster)Object.FindObjectsOfType(typeof(OutdoorLightMaster))[0]).GetPrivate<Material>(
+                "tempSkybox");
         if (Plugin.VolumetricAvailable) VolumetricSkyboxHelper.UnloadAllVolumetricSkyboxes();
         if (IsVolumetricSkybox(filePath)) {
             // Volumetric
@@ -148,12 +150,13 @@ public static class ThemeChanger {
         }
     }
 
-    private static async void ChangeGridTexture(GridSet gridSet) {
+    private static async void ChangeTechnicalGridTexture(string[] files, string textureName) {
         if (CustomTexObj == null) {
             Plugin.Log.LogWarning("CustomTextures not found");
             return;
         }
-        if (CustomTexObj != null && CustomTexObj.gameObject != null && !CustomTexObj.gameObject.activeSelf)
+
+        if (CustomTexObj.gameObject != null && !CustomTexObj.gameObject.activeSelf)
             CustomTexObj.gameObject.SetActive(true);
 
 
@@ -163,20 +166,31 @@ public static class ThemeChanger {
             return;
         }
 
-        if (File.Exists(gridSet.Base)) mats[0].mainTexture = await FileAssetHelper.LoadTextureAsync(gridSet.Base);
-        if (File.Exists(gridSet.Top)) mats[1].mainTexture = await FileAssetHelper.LoadTextureAsync(gridSet.Top);
-        if (File.Exists(gridSet.TopRow)) mats[2].mainTexture = await FileAssetHelper.LoadTextureAsync(gridSet.TopRow);
+        for (int i = 0; i < files.Length && i < mats.Length; i++) {
+            var file = files[i];
+            if (!File.Exists(file)) continue;
+            mats[i].SetTexture(textureName, await FileAssetHelper.LoadTextureAsync(file));
+        }
+    }
+
+    private static async void ChangeGridTexture(GridSet gridSet) {
+        ChangeTechnicalGridTexture([gridSet.Base, gridSet.Top, gridSet.TopRow], "_MainTex");
+    }
+
+    private static void ChangeGlowTexture(string targetFile) {
+        ChangeTechnicalGridTexture([targetFile, targetFile, targetFile], "_EmissiveTex");
     }
 
     private static async void ChangeGrid(string skyboxFilePath) {
         Plugin.Log.LogInfo($"-- Changing grid. [skybox={skyboxFilePath}]");
         string targetFile;
         GridSet gridSet = new GridSet();
-        targetFile = SelectMatchingGridFile(skyboxFilePath);
+        targetFile = SelectMatchingFile(skyboxFilePath,
+            ["", "base", "top", "topRow", "toprow", "_base", "_top", "_topRow", "_toprow"],
+            [".jpg", ".jpeg", ".png"]);
         if (targetFile != "") {
             gridSet = GridSet.FromSingleFile(targetFile);
-        }
-        else {
+        } else {
             switch (ConfigManager.GridSelectionMode.value) {
                 case ConfigManager.SecondarySelectionMode.Independent:
                     targetFile = SelectGridFile(ConfigManager.GridDir.value, ConfigManager.SkyboxChangeOrder.value);
@@ -216,10 +230,24 @@ public static class ThemeChanger {
             // Plugin.Log.LogInfo($"LIGHT {light.name} from {light.gameObject?.name}");
             light.color = CachedSkyboxColor;
             float multiplier = (ConfigManager.LightingAdjustment.value
-                ? Math.Max(CachedSkyboxColor.PerceivedLightness(), 0.2f)
+                ? Math.Clamp(CachedSkyboxColor.PerceivedLightness(), 0.2f, 0.5f)
                 : 1);
             light.intensity = ConfigManager.LightingIntensity.value * multiplier;
         }
+    }
+
+    private static async void ChangeGlow(string skyboxFilePath) {
+        Plugin.Log.LogInfo($"-- Changing glow. [skybox={skyboxFilePath}]");
+        string targetFile = SelectMatchingFile(ConfigManager.GlowDir.value, [""], [".jpg", ".jpeg", ".png"]);
+        if (targetFile == "") {
+            switch (ConfigManager.GlowSelectionMode.value) {
+                case ConfigManager.MonochromeSelectionMode.Independent:
+                    targetFile = SelectGridFile(ConfigManager.GlowDir.value, ConfigManager.SkyboxChangeOrder.value);
+                    break;
+            }
+        }
+
+        ChangeGlowTexture(targetFile);
     }
 
     public static async Task ChangeTheme() {
@@ -229,6 +257,7 @@ public static class ThemeChanger {
         if (ConfigManager.SkyboxEnabled.value) ChangeSkybox(filePath);
         if (ConfigManager.LightingEnabled.value) ChangeLighting(filePath);
         if (ConfigManager.GridEnabled.value) ChangeGrid(filePath);
+        if (ConfigManager.GlowEnabled.value) ChangeGlow(filePath);
     }
 
     public static void SetupScene() {
