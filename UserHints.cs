@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Notiffy.API;
 using UnityEngine.SceneManagement;
@@ -28,12 +29,12 @@ internal static class UserHints {
         if (id == notificationId) {
             switch (actionIdentifier) {
                 case "yes":
-                    CopyVolumetricSkyboxes();
+                    CopyAndEnableCopyVolumetricSkyboxes();
                     break;
                 case "no":
                     break;
                 case "remind":
-                    ConfigManager.FirstRun.value = true;
+                    ConfigManager.LastVersion.value = "0.0.0";
                     break;
             }
 
@@ -46,11 +47,13 @@ internal static class UserHints {
     }
 
     private static void IssueFirstRunNoticeIfNecessary() {
-        if (!ConfigManager.FirstRun.value) return;
-        ConfigManager.FirstRun.value = false;
+        Version lastVersion = new Version(ConfigManager.LastVersion.value);
+        Version currVersion = new Version(Plugin.PluginVersion);
+        if (currVersion.CompareTo(lastVersion) != 1) return;
+        ConfigManager.LastVersion.value = currVersion.ToString();
         if (Plugin.VolumetricAvailable) {
-            notificationId = NotificationSystem.NotifySend("<color=#9ccaed>CybergrindSlideshow</color> instructions",
-                $"1. The folder for slideshow files can be changed in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>\n2. Would you like to copy volumetric skyboxes to the slideshow folder?",
+            notificationId = NotificationSystem.NotifySend("<color=#9ccaed>Cybergrind Slideshow</color>",
+                $"1. Defaults settings should work, but configuration and usage notes are in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>\n2. Would you like to enable Volumetric skyboxes support (might be inconsistent) and copy them to the slideshow folder?",
                 iconFilePath: Path.Combine(Plugin.workingDir, "icon.png"),
                 appName: Plugin.PluginName,
                 expireTime: 20000,
@@ -58,11 +61,11 @@ internal static class UserHints {
             );
             Hook();
         } else {
-            NotificationSystem.NotifySend("<color=#9ccaed>CybergrindSlideshow</color> instructions",
-                $"The folder for slideshow files can be changed <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>",
+            NotificationSystem.NotifySend("<color=#9ccaed>Cybergrind Slideshow</color>",
+                $"Defaults settings should work, but configuration and usage notes are in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>",
                 iconFilePath: Path.Combine(Plugin.workingDir, "icon.png"),
                 appName: Plugin.PluginName,
-                expireTime: 20000
+                expireTime: 10000
             );
         }
     }
@@ -71,14 +74,15 @@ internal static class UserHints {
         if (SceneHelper.CurrentScene == "Endless") IssueFirstRunNoticeIfNecessary();
     }
 
-    private static void CopyVolumetricSkyboxes() {
+    private static void CopyAndEnableCopyVolumetricSkyboxes() {
+        ConfigManager.SkyboxAllowVolumetric.value = true;
         string sourceDir = ConfigManager.VolumetricSkyboxesPath;
         string destDir = ConfigManager.SkyboxDir.value;
         string[] files = Directory.GetFiles(sourceDir);
         foreach (string file in files) {
             string fileName = Path.GetFileName(file);
             string destFile = Path.Combine(destDir, fileName);
-            File.Copy(file, destFile);
+            File.Copy(file, destFile, overwrite: true);
             Plugin.Log.LogInfo($"Copied: {fileName}");
         }
     }
