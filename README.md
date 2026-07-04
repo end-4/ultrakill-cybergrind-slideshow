@@ -1,11 +1,12 @@
 ## Features
 
-- Changes the skybox every new Cybergrind wave
+- Changes the skybox, grid, lighting, and glow pattern every wave
+- Automatically selects grids to match skybox color harmoniously, but also allows binding skyboxes and grids together
 - Works with Volumetric Skyboxes (well, most of them)
 
 ## Usage
 
-Go to **Options > Plugin Config** and set the target folder containing the skybox files. They can be .jpg, .png, or .cgvsb.
+Go to **Options > Plugin Config**. Instructions are in there.
 
 ## Acknowledgement
 

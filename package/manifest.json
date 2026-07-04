@@ -3,7 +3,7 @@
     "author": "end_4",
     "version_number": "1.1.0",
     "website_url": "https://github.com/end-4/ultrakill-cybergrind-slideshow",
-    "description": "Changes the skybox every wave. Compatible-ish with VolumetricSkyboxes.",
+    "description": "Changes the CG theme every wave for a fresher and more immersive experience. Works with Volumetric Skyboxes.",
     "dependencies": [
         "BepInEx-BepInExPack-5.4.2100",
         "EternalsTeam-PluginConfigurator-1.10.2",
