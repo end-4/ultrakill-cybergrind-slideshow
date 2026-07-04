@@ -53,7 +53,7 @@ internal static class UserHints {
         ConfigManager.LastVersion.value = currVersion.ToString();
         if (Plugin.VolumetricAvailable) {
             notificationId = NotificationSystem.NotifySend("<color=#9ccaed>Cybergrind Slideshow</color>",
-                $"1. Defaults settings should work, but configuration and usage notes are in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>\n2. Would you like to enable Volumetric skyboxes support (might be inconsistent) and copy them to the slideshow folder?",
+                $"1. Default settings should work, but configuration and usage notes are in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>\n2. Would you like to enable Volumetric skyboxes support (might be inconsistent) and copy them to the slideshow folder?",
                 iconFilePath: Path.Combine(Plugin.workingDir, "icon.png"),
                 appName: Plugin.PluginName,
                 expireTime: 20000,
@@ -62,7 +62,7 @@ internal static class UserHints {
             Hook();
         } else {
             NotificationSystem.NotifySend("<color=#9ccaed>Cybergrind Slideshow</color>",
-                $"Defaults settings should work, but configuration and usage notes are in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>",
+                $"Default settings should work, but configuration and usage notes are in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>",
                 iconFilePath: Path.Combine(Plugin.workingDir, "icon.png"),
                 appName: Plugin.PluginName,
                 expireTime: 10000
