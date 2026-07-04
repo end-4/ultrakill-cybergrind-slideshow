@@ -16,6 +16,7 @@ using RenderSettings = UnityEngine.RenderSettings;
 namespace CybergrindSlideshow;
 
 public static class ThemeChanger {
+    private static string LastSkyboxPath = "";
     private static Color CachedSkyboxColor = Color.black;
     private static CustomTextures? CustomTexObj;
     private static GameObject LightObj;
@@ -39,7 +40,7 @@ public static class ThemeChanger {
 
             string baseSuffixPath = Path.Join(baseDir, baserName + "base" + fileExt);
             string topSuffixPath = Path.Join(baseDir, baserName + "top" + fileExt);
-            string topRowSuffixPath = Path.Join(baseDir, baserName + "top" + fileExt);
+            string topRowSuffixPath = Path.Join(baseDir, baserName + "topRow" + fileExt);
             string noSuffixPath = Path.Join(baseDir, baserName + fileExt);
 
             string fallbackPath = File.Exists(noSuffixPath) ? noSuffixPath : filePath;
@@ -80,7 +81,9 @@ public static class ThemeChanger {
                 break;
         }
 
+        if (files[fileIndex] == LastSkyboxPath) fileIndex = (fileIndex + 1) % files.Count();
         chosen = files[fileIndex];
+        LastSkyboxPath = chosen;
         return chosen;
     }
 
@@ -229,17 +232,19 @@ public static class ThemeChanger {
     }
 
     public static void SetupScene() {
-        // Hack to make sure we always have a CustomTextures component (it gets unloaded at some point usually)
-        if (CustomTexObj == null) {
-            CustomTextures customTextures = Object.FindObjectOfType<CustomTextures>();
-            CustomTexObj = Object.Instantiate(customTextures.gameObject).GetComponent<CustomTextures>();
-        }
-
-        // Add arena lighting
+        // Add arena lighting (I realized there's a more proper way than point light)
         // LightObj = new GameObject("SkyboxShine");
         // LightObj.transform.position = new Vector3(0, 90, 62);
         // LightComp = LightObj.AddComponent<Light>();
         // LightComp.range = 1000;
+    }
 
+    public static void SetupFirstWaveIfNecessary() {
+        // Hack to make sure we always have a CustomTextures component (it gets unloaded at some point usually)
+        if (CustomTexObj == null) {
+            CustomTextures customTextures = Object.FindObjectOfType<CustomTextures>();
+            CustomTexObj = Object.Instantiate(customTextures.gameObject).GetComponent<CustomTextures>();
+            Plugin.Log.LogInfo("Duped CustomTextures");
+        }
     }
 }

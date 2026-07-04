@@ -50,6 +50,13 @@ public class Plugin : BaseUnityPlugin {
     [HarmonyPatch(typeof(EndlessGrid))]
     [HarmonyPatch("NextWave")]
     public class EndlessGridPatch {
+        public static void Prefix() {
+            try {
+                ThemeChanger.SetupFirstWaveIfNecessary();
+            } catch (Exception e) {
+                Plugin.Log.LogWarning(e);
+            }
+        }
         public static void Postfix() {
             Log.LogInfo("Cycling stuff");
             ThemeChanger.ChangeTheme();
