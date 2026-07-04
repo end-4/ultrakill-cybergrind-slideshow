@@ -88,9 +88,9 @@ public class ConfigManager {
         new ConfigHeader(config.rootPanel, "", 10);
         new ConfigHeader(config.rootPanel, "-- <color=#f1c40f>LIGHTING</color> --", 24);
         LightingEnabled = new BoolField(config.rootPanel, "Sync with skybox", "lightingEnabled", true);
-        LightingIntensity = new FloatField(config.rootPanel, "Lighting intensity", "lightingIntensity", 20f);
+        LightingIntensity = new FloatField(config.rootPanel, "Lighting intensity", "lightingIntensity", 5f);
         LightingAdjustment = new BoolField(config.rootPanel, "Adjust intensity based on lightness",
-            "lightingAdjustment", true);
+            "lightingAdjustment", false);
 
         new ConfigHeader(config.rootPanel, "", 10);
         new ConfigHeader(config.rootPanel, "-- <color=#9c87f4>GRID</color> --", 24);

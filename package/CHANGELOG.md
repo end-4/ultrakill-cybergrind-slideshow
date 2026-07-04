@@ -1,3 +1,8 @@
+## 1.1.1
+
+- Fixed glow not possible to have base top toprow textures
+- Toned down default lighting settings
+
 ## 1.1.0
 
 - Added ability to change grid + lighting + glow pattern

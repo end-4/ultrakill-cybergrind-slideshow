@@ -26,36 +26,67 @@ public static class ThemeChanger {
         return filePath.EndsWith(".cgvsb");
     }
 
+    private static readonly string[] ImageExtensions = [".jpg", ".jpeg", ".png"];
+
+    private static readonly string[] GridFaceSuffixes =
+        ["", "base", "top", "topRow", "toprow", "_base", "_top", "_topRow", "_toprow", "_BASE", "_TOP", "_TOP ROW"];
+
+
     private record struct GridSet {
         public string Top;
         public string Base;
         public string TopRow;
 
+        /// <summary>
+        /// Gets a grid set around a given file
+        /// </summary>
+        /// <param name="filePath">The given file that exists. It can be any of the set</param>
+        /// <returns>A set of grids that go together, bound through naming</returns>
         public static GridSet FromSingleFile(string filePath) {
-            var gs = new GridSet();
             string fileExt = Path.GetExtension(filePath);
             string baseFileName = Path.GetFileNameWithoutExtension(filePath);
-            string baseDir = Path.GetDirectoryName(filePath);
-            string baserName = Regex.Replace(baseFileName, @"(base|topRow|toprow|top)$", "");
+            string baseDir = Path.GetDirectoryName(filePath) ?? "";
 
-            string baseSuffixPath = Path.Join(baseDir, baserName + "base" + fileExt);
-            string topSuffixPath = Path.Join(baseDir, baserName + "top" + fileExt);
-            string topRowSuffixPath = Path.Join(baseDir, baserName + "topRow" + fileExt);
-            string lowerTopRowSuffixPath = Path.Join(baseDir, baserName + "toprow" + fileExt);
-            string noSuffixPath = Path.Join(baseDir, baserName + fileExt);
+            // Strip out suffix
+            string baseName = Regex.Replace(baseFileName, @"(base|topRow|toprow|top)$", "");
 
-            string fallbackPath = File.Exists(noSuffixPath) ? noSuffixPath : filePath;
-            gs.Top = File.Exists(topSuffixPath) ? topSuffixPath : fallbackPath;
-            gs.Base = File.Exists(baseSuffixPath) ? baseSuffixPath : fallbackPath;
-            gs.TopRow = File.Exists(topRowSuffixPath) ? topRowSuffixPath :
-                File.Exists(lowerTopRowSuffixPath) ? lowerTopRowSuffixPath :
-                fallbackPath;
+            // Suffix map stuff
+            string GetPath(string suffix) => Path.Join(baseDir, $"{baseName}{suffix}{fileExt}");
+            var suffixMap = new[] {
+                (Property: nameof(Top), Suffixes: new[] { "top", "TOP" }),
+                (Property: nameof(Base), Suffixes: new[] { "base", "BASE" }),
+                (Property: nameof(TopRow), Suffixes: new[] { "topRow", "toprow", "TOPROW", "TOP ROW" })
+            };
+
+            string fallbackPath = File.Exists(GetPath("")) ? GetPath("") : filePath;
+
+            var gs = new GridSet();
+            foreach (var rule in suffixMap) {
+                string resolvedPath = fallbackPath;
+
+                foreach (var suffix in rule.Suffixes) {
+                    string candidatePath = GetPath(suffix);
+                    if (File.Exists(candidatePath)) {
+                        resolvedPath = candidatePath;
+                        break;
+                    }
+                }
+
+                // Assign to the field
+                switch (rule.Property) {
+                    case nameof(Top): gs.Top = resolvedPath; break;
+                    case nameof(Base): gs.Base = resolvedPath; break;
+                    case nameof(TopRow): gs.TopRow = resolvedPath; break;
+                }
+            }
+
             return gs;
         }
 
         public static GridSet FromPrefs() {
             var prefs = MonoSingleton<PrefsManager>.Instance;
             GridSet gs = new GridSet();
+            if (prefs == null) return gs;
             gs.Top = prefs.GetStringLocal("cyberGrind.customGrid_1");
             gs.TopRow = prefs.GetStringLocal("cyberGrind.customGrid_2");
             gs.Base = prefs.GetStringLocal("cyberGrind.customGrid_0");
@@ -103,7 +134,8 @@ public static class ThemeChanger {
         return SelectFile(folderPath, selectionMode, [".jpg", ".jpeg", ".png"]);
     }
 
-    private static string SelectMatchingFile(string searchDir, string baseFilePath, string[] suffixes, string[] extensions) {
+    private static string SelectMatchingFile(string searchDir, string baseFilePath, string[] suffixes,
+        string[] extensions) {
         string baseName = Path.GetFileNameWithoutExtension(baseFilePath);
 
         foreach (string suffix in suffixes) {
@@ -178,9 +210,8 @@ public static class ThemeChanger {
         ChangeTechnicalGridTexture([gridSet.Base, gridSet.Top, gridSet.TopRow], "_MainTex");
     }
 
-    private static void ChangeGlowTexture(string targetFile) {
-        Plugin.Log.LogInfo($"Glow   -> {targetFile}");
-        ChangeTechnicalGridTexture([targetFile, targetFile, targetFile], "_EmissiveTex");
+    private static void ChangeGlowTexture(GridSet gridSet) {
+        ChangeTechnicalGridTexture([gridSet.Base, gridSet.Top, gridSet.TopRow], "_EmissiveTex");
     }
 
     private static async void ChangeGrid(string skyboxFilePath) {
@@ -188,8 +219,7 @@ public static class ThemeChanger {
         string targetFile;
         GridSet gridSet = new GridSet();
         targetFile = SelectMatchingFile(ConfigManager.GridDir.value, skyboxFilePath,
-            ["", "base", "top", "topRow", "toprow", "_base", "_top", "_topRow", "_toprow"],
-            [".jpg", ".jpeg", ".png"]);
+            GridFaceSuffixes, ImageExtensions);
         if (targetFile != "") {
             gridSet = GridSet.FromSingleFile(targetFile);
         } else {
@@ -240,7 +270,8 @@ public static class ThemeChanger {
 
     private static async void ChangeGlow(string skyboxFilePath) {
         // Plugin.Log.LogInfo($"-- Changing glow. [skybox={skyboxFilePath}]");
-        string targetFile = SelectMatchingFile(ConfigManager.GlowDir.value, skyboxFilePath, [""], [".jpg", ".jpeg", ".png"]);
+        string targetFile = SelectMatchingFile(ConfigManager.GlowDir.value, skyboxFilePath,
+            GridFaceSuffixes, ImageExtensions);
         // Plugin.Log.LogInfo($"-- Matching target = {targetFile}");
         if (targetFile == "") {
             switch (ConfigManager.GlowSelectionMode.value) {
@@ -250,15 +281,18 @@ public static class ThemeChanger {
             }
         }
 
-        ChangeGlowTexture(targetFile);
+        GridSet gs = GridSet.FromSingleFile(targetFile);
+        ChangeGlowTexture(gs);
     }
 
     private static bool FirstWaveChange = true;
+
     public static async Task ChangeTheme() {
         if (FirstWaveChange) {
             FirstWaveChange = false;
             return;
         }
+
         string filePath = SelectSkyboxFile(ConfigManager.SkyboxDir.value, ConfigManager.SkyboxChangeOrder.value);
         if (filePath == "") return;
         Plugin.Log.LogInfo("---- New wave ----");
