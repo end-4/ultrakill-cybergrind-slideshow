@@ -250,7 +250,12 @@ public static class ThemeChanger {
         ChangeGlowTexture(targetFile);
     }
 
+    private static bool FirstWaveChange = true;
     public static async Task ChangeTheme() {
+        if (FirstWaveChange) {
+            FirstWaveChange = false;
+            return;
+        }
         string filePath = SelectSkyboxFile(ConfigManager.SkyboxDir.value, ConfigManager.SkyboxChangeOrder.value);
         if (filePath == "") return;
         Plugin.Log.LogInfo("---- New wave ----");
@@ -261,6 +266,7 @@ public static class ThemeChanger {
     }
 
     public static void SetupScene() {
+        FirstWaveChange = true;
         // Add arena lighting (I realized there's a more proper way than point light)
         // LightObj = new GameObject("SkyboxShine");
         // LightObj.transform.position = new Vector3(0, 90, 62);

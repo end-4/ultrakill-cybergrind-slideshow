@@ -79,7 +79,7 @@ public class ConfigManager {
         SkyboxEnabled = new BoolField(config.rootPanel, "Change skybox", "skyboxEnabled", true);
         SkyboxDir = new StringField(config.rootPanel, "Skybox folder", "skyboxDir", SkyboxesPath);
         SkyboxChangeOrder = new EnumField<SelectionMode>(config.rootPanel, "Skybox change order", "skyboxChangeOrder",
-            SelectionMode.DeterministicSequential);
+            SelectionMode.Random);
         SkyboxAllowVolumetric =
             new BoolField(config.rootPanel, "Allow volumetric skyboxes", "skyboxAllowVolumetric", false);
         ForceDisableVolumetricSkyboxGridTexture = new BoolField(config.rootPanel,
@@ -107,7 +107,7 @@ public class ConfigManager {
             "glowSelectionMode", MonochromeSelectionMode.Independent);
 
         new ConfigHeader(config.rootPanel, "", 10);
-        new ConfigHeader(config.rootPanel, "<color=#51525c>-- DEBUG --</color>", 24);
+        new ConfigHeader(config.rootPanel, "-- DEBUG --", 24);
         var devPanel = new ConfigPanel(config.rootPanel, "Developer options", "devOptions");
         new ConfigHeader(devPanel, "", 10);
         new ConfigHeader(devPanel, "These don't do anything exciting. Don't bother.", 13);
