@@ -48,7 +48,7 @@ internal static class UserHints {
 
     private static void IssueFirstRunNoticeIfNecessary() {
         Version lastVersion = new Version(ConfigManager.LastVersion.value);
-        Version currVersion = new Version(Plugin.PluginVersion);
+        Version currVersion = new Version("1.1.0");
         if (currVersion.CompareTo(lastVersion) != 1) return;
         ConfigManager.LastVersion.value = currVersion.ToString();
         if (Plugin.VolumetricAvailable) {
