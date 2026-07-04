@@ -7,6 +7,7 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Logging;
 using HarmonyLib;
+using UnityEngine;
 
 namespace CybergrindSlideshow;
 
@@ -52,6 +53,14 @@ public class Plugin : BaseUnityPlugin {
         public static void Postfix() {
             Log.LogInfo("Cycling stuff");
             ThemeChanger.ChangeTheme();
+        }
+    }
+
+    [HarmonyPatch(typeof(EndlessGrid))]
+    [HarmonyPatch("Start")]
+    public class EndlessGridStart {
+        public static void Postfix() {
+            ThemeChanger.SetupScene();
         }
     }
 }

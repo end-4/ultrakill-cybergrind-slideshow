@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 namespace CybergrindSlideshow;
 
 internal static class UserHints {
-    private static Dictionary<string, string> volumetricCopyActions = new Dictionary<string, string>() {
+    private static readonly Dictionary<string, string> VolumetricCopyActions = new Dictionary<string, string>() {
         { "yes", "Yes" },
         { "no", "No" },
         { "remind", "Remind me later" },
@@ -48,14 +48,23 @@ internal static class UserHints {
     private static void IssueFirstRunNoticeIfNecessary() {
         if (!ConfigManager.FirstRun.value) return;
         ConfigManager.FirstRun.value = false;
-        notificationId = NotificationSystem.NotifySend("CybergrindSlideshow",
-            $"1. The folder for slideshow files can be adjusted in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>\n2. Would you like to copy volumetric skyboxes to the slideshow folder?",
-            iconFilePath: Path.Combine(Plugin.workingDir, "icon.png"),
-            appName: Plugin.PluginName,
-            expireTime: 20000,
-            actions: volumetricCopyActions
-        );
-        Hook();
+        if (Plugin.VolumetricAvailable) {
+            notificationId = NotificationSystem.NotifySend("<color=#9ccaed>CybergrindSlideshow</color> instructions",
+                $"1. The folder for slideshow files can be changed in <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>\n2. Would you like to copy volumetric skyboxes to the slideshow folder?",
+                iconFilePath: Path.Combine(Plugin.workingDir, "icon.png"),
+                appName: Plugin.PluginName,
+                expireTime: 20000,
+                actions: VolumetricCopyActions
+            );
+            Hook();
+        } else {
+            NotificationSystem.NotifySend("<color=#9ccaed>CybergrindSlideshow</color> instructions",
+                $"The folder for slideshow files can be changed <color=#55c7f6>Options > Plugin Config > Cybergrind Slideshow</color>",
+                iconFilePath: Path.Combine(Plugin.workingDir, "icon.png"),
+                appName: Plugin.PluginName,
+                expireTime: 20000
+            );
+        }
     }
 
     private static void OnSceneLoaded(Scene s, LoadSceneMode m) {

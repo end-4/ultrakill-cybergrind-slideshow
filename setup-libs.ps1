@@ -64,6 +64,8 @@ $r2Dlls = @(
     "BepInEx\plugins\EternalsTeam-PluginConfigurator\PluginConfigurator\PluginConfigurator.dll"
     "BepInEx\plugins\end_4-NukeLib\NukeLib.dll"
     "BepInEx\plugins\end_4-NukeLib\NukeLib.xml"
+    "BepInEx\plugins\NukeLib\NukeLib.dll"
+    "BepInEx\plugins\NukeLib\NukeLib.xml"
     "BepInEx\plugins\end_4-Notiffy\Notiffy\Notiffy.dll"
     "BepInEx\plugins\end_4-Notiffy\Notiffy\Notiffy.xml"
     "BepInEx\plugins\Flazhik-VolumetricSkyboxes\VolumetricSkyboxes\VolumetricSkyboxes.dll"
