@@ -34,6 +34,9 @@ public class ConfigManager {
         Path.Combine(ApplicationPath, "Cybergrind", "VolumetricSkyboxes");
 
     private static PluginConfigurator config;
+
+    public static IntField ThemeChangeWaveInterval;
+
     public static BoolField SkyboxEnabled;
     public static StringField SkyboxDir;
     public static EnumField<SelectionMode> SkyboxChangeOrder;
@@ -72,6 +75,10 @@ public class ConfigManager {
             "- <color=#95f857><u>Glow</u></color>: You can also match with skybox with precise file naming like grids, but other than that it's random\n" +
             "- <color=#95f857><u>Volumetric skyboxes</u></color>: Can be used, but they cause Slideshow to be inconsistent in dominant color detection & grid swapping, so they're disabled by default."
             , 13, TextAlignmentOptions.Left);
+
+        new ConfigHeader(config.rootPanel, "", 10);
+        new ConfigHeader(config.rootPanel, "-- <color=#69fff7>GENERAL</color> --", 24);
+        ThemeChangeWaveInterval = new IntField(config.rootPanel, "Change theme every x wave, where x=", "themeChangeWaveInterval", 1);
 
         new ConfigHeader(config.rootPanel, "", 10);
         new ConfigHeader(config.rootPanel, "-- <color=#55bcec>SKYBOX</color> --", 24);

@@ -286,12 +286,17 @@ public static class ThemeChanger {
     }
 
     private static bool FirstWaveChange = true;
+    private static int wavesPassed = 0;
 
     public static async Task ChangeTheme() {
         if (FirstWaveChange) {
             FirstWaveChange = false;
             return;
         }
+
+        wavesPassed++;
+        if (wavesPassed < ConfigManager.ThemeChangeWaveInterval.value) return;
+        wavesPassed = 0;
 
         string filePath = SelectSkyboxFile(ConfigManager.SkyboxDir.value, ConfigManager.SkyboxChangeOrder.value);
         if (filePath == "") return;
