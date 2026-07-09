@@ -27,6 +27,7 @@ public static class ThemeChanger {
     }
 
     private static readonly string[] ImageExtensions = [".jpg", ".jpeg", ".png"];
+    private static readonly string[] AudioExtensions = [".mp3", ".wav", ".ogg"];
 
     private static readonly string[] GridFaceSuffixes =
         ["", "base", "top", "topRow", "toprow", "_base", "_top", "_topRow", "_toprow", "_BASE", "_TOP", "_TOP ROW"];
@@ -95,27 +96,32 @@ public static class ThemeChanger {
     }
 
     private static string SelectFile(string folderPath, ConfigManager.SelectionMode selectionMode,
-        string[] allowedExtensions) {
+        string[] allowedExtensions, bool recursive = false) {
+
         if (!Directory.Exists(folderPath)) return "";
-        string[] files = Directory.EnumerateFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
+
+        SearchOption searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+        string[] files = Directory.EnumerateFiles(folderPath, "*.*", searchOption)
             .Where(file => allowedExtensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
             .ToArray();
+
+        if (files.Length == 0) return "";
 
         string chosen = "";
         int fileIndex = 0;
         switch (selectionMode) {
             case ConfigManager.SelectionMode.Random:
-                fileIndex = UnityEngine.Random.Range(0, files.Count());
+                fileIndex = UnityEngine.Random.Range(0, files.Length);
                 // Plugin.Log.LogInfo($"Random index {fileIndex}");
                 break;
             case ConfigManager.SelectionMode.DeterministicSequential:
             default:
-                fileIndex = MonoSingleton<EndlessGrid>.Instance.currentWave % files.Count();
+                fileIndex = MonoSingleton<EndlessGrid>.Instance.currentWave % files.Length;
                 // Plugin.Log.LogInfo($"Sequential index {fileIndex}");
                 break;
         }
 
-        if (files[fileIndex] == LastSkyboxPath) fileIndex = (fileIndex + 1) % files.Count();
+        if (files[fileIndex] == LastSkyboxPath) fileIndex = (fileIndex + 1) % files.Length;
         chosen = files[fileIndex];
         LastSkyboxPath = chosen;
         return chosen;
@@ -125,18 +131,20 @@ public static class ThemeChanger {
         return SelectFile(folderPath, selectionMode,
             (Plugin.VolumetricAvailable && ConfigManager.SkyboxAllowVolumetric.value)
                 ? [".jpg", ".jpeg", ".png", ".cgvsb"]
-                : [".jpg", ".jpeg", ".png"]
+                : [".jpg", ".jpeg", ".png"],
+            recursive: ConfigManager.SkyboxDirRecursive.value
         );
     }
 
-    private static string SelectGridFile(string folderPath, ConfigManager.SelectionMode selectionMode) {
+    private static string SelectGridFile(string folderPath, ConfigManager.SelectionMode selectionMode, bool recursive) {
         // TODO maybe support AnimatedCybergrindTextures
-        return SelectFile(folderPath, selectionMode, [".jpg", ".jpeg", ".png"]);
+        return SelectFile(folderPath, selectionMode, [".jpg", ".jpeg", ".png"], recursive: recursive);
     }
 
     private static string SelectMatchingFile(string searchDir, string baseFilePath, string[] suffixes,
         string[] extensions) {
-        string baseName = Path.GetFileNameWithoutExtension(baseFilePath);
+        // Trim allows arbitrarily many skyboxes to link to one grid
+        string baseName = Path.GetFileNameWithoutExtension(baseFilePath).Trim();
 
         foreach (string suffix in suffixes) {
             foreach (string ext in extensions) {
@@ -214,6 +222,10 @@ public static class ThemeChanger {
         ChangeTechnicalGridTexture([gridSet.Base, gridSet.Top, gridSet.TopRow], "_EmissiveTex");
     }
 
+    // private static void ChangeMusicFile(string filePath) {
+    //     var musicBrowser = Object.FindObjectsOfType<CustomMusicFileBrowser>();
+    // }
+
     private static async void ChangeGrid(string skyboxFilePath) {
         // Plugin.Log.LogInfo($"-- Changing grid. [skybox={skyboxFilePath}]");
         string targetFile;
@@ -225,7 +237,7 @@ public static class ThemeChanger {
         } else {
             switch (ConfigManager.GridSelectionMode.value) {
                 case ConfigManager.SecondarySelectionMode.Independent:
-                    targetFile = SelectGridFile(ConfigManager.GridDir.value, ConfigManager.SkyboxChangeOrder.value);
+                    targetFile = SelectGridFile(ConfigManager.GridDir.value, ConfigManager.SkyboxChangeOrder.value, ConfigManager.GridDirRecursive.value);
                     gridSet = GridSet.FromSingleFile(targetFile);
                     break;
                 case ConfigManager.SecondarySelectionMode.StrictlyMatchSkyboxName:
@@ -236,7 +248,7 @@ public static class ThemeChanger {
                     // var targetColor = CachedSkyboxColor == Color.black ? ImageUtils.GetDominantColor(skyboxFilePath) : CachedSkyboxColor;
                     var targetColor = CachedSkyboxColor;
                     // Plugin.Log.LogInfo($"Target color: {targetColor}");
-                    var closestImage = ImageUtils.FindClosestColorImage(targetColor, ConfigManager.GridDir.value);
+                    var closestImage = ImageUtils.FindClosestColorFile(targetColor, ConfigManager.GridDir.value);
                     // Plugin.Log.LogInfo($"Closest image: {closestImage}");
                     gridSet = GridSet.FromSingleFile(closestImage);
                     break;
@@ -276,7 +288,7 @@ public static class ThemeChanger {
         if (targetFile == "") {
             switch (ConfigManager.GlowSelectionMode.value) {
                 case ConfigManager.MonochromeSelectionMode.Independent:
-                    targetFile = SelectGridFile(ConfigManager.GlowDir.value, ConfigManager.SkyboxChangeOrder.value);
+                    targetFile = SelectGridFile(ConfigManager.GlowDir.value, ConfigManager.SkyboxChangeOrder.value, ConfigManager.GlowDirRecursive.value);
                     break;
             }
         }
@@ -284,6 +296,27 @@ public static class ThemeChanger {
         GridSet gs = GridSet.FromSingleFile(targetFile);
         ChangeGlowTexture(gs);
     }
+
+    // public static async void ChangeMusic(string skyboxFilePath) {
+    //     string targetFile = SelectMatchingFile(ConfigManager.MusicDir.value, skyboxFilePath,
+    //         [""], AudioExtensions);
+    //     // Plugin.Log.LogInfo($"-- Matching target = {targetFile}");
+    //     if (targetFile == "") {
+    //         switch (ConfigManager.MusicSelectionMode.value) {
+    //             case ConfigManager.SecondarySelectionMode.Independent:
+    //                 targetFile = SelectFile(ConfigManager.MusicDir.value, ConfigManager.SkyboxChangeOrder.value, AudioExtensions, ConfigManager.MusicDirRecursive.value);
+    //                 break;
+    //             case ConfigManager.SecondarySelectionMode.StrictlyMatchSkyboxName:
+    //                 return;
+    //             case ConfigManager.SecondarySelectionMode.ClosestColorToSkybox:
+    //                 var targetColor = CachedSkyboxColor;
+    //                 targetFile = ImageUtils.FindClosestColorFile(targetColor, ConfigManager.GridDir.value);
+    //                 break;
+    //         }
+    //     }
+    //
+    //     ChangeMusicFile(targetFile);
+    // }
 
     private static bool FirstWaveChange = true;
     private static int wavesPassed = 0;
@@ -305,6 +338,7 @@ public static class ThemeChanger {
         if (ConfigManager.LightingEnabled.value) ChangeLighting(filePath);
         if (ConfigManager.GridEnabled.value) ChangeGrid(filePath);
         if (ConfigManager.GlowEnabled.value) ChangeGlow(filePath);
+        // if (ConfigManager.MusicEnabled.value) ChangeMusic(filePath);
     }
 
     public static void SetupScene() {

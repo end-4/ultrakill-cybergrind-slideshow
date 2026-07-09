@@ -1,3 +1,7 @@
+## 1.2.0
+
+- Added option to search files recursively
+
 ## 1.1.1
 
 - Fixed glow not possible to have base top toprow textures

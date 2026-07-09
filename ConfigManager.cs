@@ -29,6 +29,7 @@ public class ConfigManager {
     internal static readonly string SkyboxesPath = Path.Combine(ApplicationPath, "Cybergrind", "Textures", "Skyboxes");
     internal static readonly string GridPath = Path.Combine(ApplicationPath, "Cybergrind", "Textures");
     internal static readonly string GlowPath = Path.Combine(ApplicationPath, "Cybergrind", "Textures", "Glows");
+    internal static readonly string MusicPath = Path.Combine(ApplicationPath, "Cybergrind", "Music");
 
     internal static readonly string VolumetricSkyboxesPath =
         Path.Combine(ApplicationPath, "Cybergrind", "VolumetricSkyboxes");
@@ -39,6 +40,7 @@ public class ConfigManager {
 
     public static BoolField SkyboxEnabled;
     public static StringField SkyboxDir;
+    public static BoolField SkyboxDirRecursive;
     public static EnumField<SelectionMode> SkyboxChangeOrder;
     public static BoolField SkyboxAllowVolumetric;
     public static BoolField ForceDisableVolumetricSkyboxGridTexture;
@@ -49,11 +51,18 @@ public class ConfigManager {
 
     public static BoolField GridEnabled;
     public static StringField GridDir;
+    public static BoolField GridDirRecursive;
     public static EnumField<SecondarySelectionMode> GridSelectionMode;
 
     public static BoolField GlowEnabled;
     public static StringField GlowDir;
+    public static BoolField GlowDirRecursive;
     public static EnumField<MonochromeSelectionMode> GlowSelectionMode;
+
+    // public static BoolField MusicEnabled;
+    // public static StringField MusicDir;
+    // public static BoolField MusicDirRecursive;
+    // public static EnumField<SecondarySelectionMode> MusicSelectionMode;
 
     public static StringField LastVersion;
 
@@ -85,6 +94,7 @@ public class ConfigManager {
 
         SkyboxEnabled = new BoolField(config.rootPanel, "Change skybox", "skyboxEnabled", true);
         SkyboxDir = new StringField(config.rootPanel, "Skybox folder", "skyboxDir", SkyboxesPath);
+        SkyboxDirRecursive = new BoolField(config.rootPanel, "Consider subfolders", "skyboxDirRecursive", true);
         SkyboxChangeOrder = new EnumField<SelectionMode>(config.rootPanel, "Skybox change order", "skyboxChangeOrder",
             SelectionMode.Random);
         SkyboxAllowVolumetric =
@@ -103,6 +113,7 @@ public class ConfigManager {
         new ConfigHeader(config.rootPanel, "-- <color=#9c87f4>GRID</color> --", 24);
         GridEnabled = new BoolField(config.rootPanel, "Change grid", "gridEnabled", true);
         GridDir = new StringField(config.rootPanel, "Grid folder", "gridDir", GridPath);
+        GridDirRecursive = new BoolField(config.rootPanel, "Consider subfolders", "gridDirRecursive", false);
         GridSelectionMode = new EnumField<SecondarySelectionMode>(config.rootPanel, "Grid selection mode",
             "gridSelectionMode", SecondarySelectionMode.ClosestColorToSkybox);
 
@@ -110,8 +121,17 @@ public class ConfigManager {
         new ConfigHeader(config.rootPanel, "-- <color=#f77428>GLOW</color> --", 24);
         GlowEnabled = new BoolField(config.rootPanel, "Change glow", "glowEnabled", true);
         GlowDir = new StringField(config.rootPanel, "Glow folder", "growDir", GlowPath);
+        GlowDirRecursive = new BoolField(config.rootPanel, "Consider subfolders", "glowDirRecursive", false);
         GlowSelectionMode = new EnumField<MonochromeSelectionMode>(config.rootPanel, "Glow selection mode",
             "glowSelectionMode", MonochromeSelectionMode.Independent);
+
+        // new ConfigHeader(config.rootPanel, "", 10);
+        // new ConfigHeader(config.rootPanel, "-- <color=#e51af0>MUSIC</color> --", 24);
+        // MusicEnabled = new BoolField(config.rootPanel, "Change music", "musicEnabled", true);
+        // MusicDir = new StringField(config.rootPanel, "Music folder", "musicDir", MusicPath);
+        // MusicDirRecursive = new BoolField(config.rootPanel, "Consider subfolders", "musicDirRecursive", true);
+        // MusicSelectionMode = new EnumField<SecondarySelectionMode>(config.rootPanel, "Music selection mode",
+        //     "musicSelectionMode", SecondarySelectionMode.StrictlyMatchSkyboxName);
 
         new ConfigHeader(config.rootPanel, "", 10);
         new ConfigHeader(config.rootPanel, "-- DEBUG --", 24);
