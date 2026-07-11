@@ -248,7 +248,7 @@ public static class ThemeChanger {
                     // var targetColor = CachedSkyboxColor == Color.black ? ImageUtils.GetDominantColor(skyboxFilePath) : CachedSkyboxColor;
                     var targetColor = CachedSkyboxColor;
                     // Plugin.Log.LogInfo($"Target color: {targetColor}");
-                    var closestImage = ImageUtils.FindClosestColorFile(targetColor, ConfigManager.GridDir.value);
+                    var closestImage = ImageUtils.FindClosestColorImage(targetColor, ConfigManager.GridDir.value);
                     // Plugin.Log.LogInfo($"Closest image: {closestImage}");
                     gridSet = GridSet.FromSingleFile(closestImage);
                     break;
