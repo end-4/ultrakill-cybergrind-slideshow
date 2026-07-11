@@ -1,5 +1,6 @@
 ## 1.2.0
 
+- Improved theme switching performance
 - Added option to search files recursively
 - Added customization for theme switching triggers
   - Number of waves

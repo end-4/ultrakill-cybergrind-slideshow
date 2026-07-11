@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -21,6 +22,8 @@ public static class ThemeChanger {
     private static CustomTextures? CustomTexObj;
     private static GameObject LightObj;
     private static Light LightComp;
+
+    private static Dictionary<string, string[]> DirectoryCache = new();
 
     private static bool IsVolumetricSkybox(string filePath) {
         return filePath.EndsWith(".cgvsb");
@@ -48,10 +51,8 @@ public static class ThemeChanger {
             string baseFileName = Path.GetFileNameWithoutExtension(filePath);
             string baseDir = Path.GetDirectoryName(filePath) ?? "";
 
-            // Strip out suffix
             string baseName = Regex.Replace(baseFileName, @"(base|topRow|toprow|top)$", "");
 
-            // Suffix map stuff
             string GetPath(string suffix) => Path.Join(baseDir, $"{baseName}{suffix}{fileExt}");
             var suffixMap = new[] {
                 (Property: nameof(Top), Suffixes: new[] { "top", "TOP" }),
@@ -73,7 +74,6 @@ public static class ThemeChanger {
                     }
                 }
 
-                // Assign to the field
                 switch (rule.Property) {
                     case nameof(Top): gs.Top = resolvedPath; break;
                     case nameof(Base): gs.Base = resolvedPath; break;
@@ -100,10 +100,15 @@ public static class ThemeChanger {
 
         if (!Directory.Exists(folderPath)) return "";
 
-        SearchOption searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-        string[] files = Directory.EnumerateFiles(folderPath, "*.*", searchOption)
-            .Where(file => allowedExtensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
-            .ToArray();
+        string cacheKey = folderPath + "_" + recursive;
+        if (!DirectoryCache.TryGetValue(cacheKey, out string[] files)) {
+            SearchOption searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            files = Directory.EnumerateFiles(folderPath, "*.*", searchOption)
+                .Where(file => allowedExtensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
+                .ToArray();
+            
+            DirectoryCache[cacheKey] = files;
+        }
 
         if (files.Length == 0) return "";
 
@@ -112,12 +117,10 @@ public static class ThemeChanger {
         switch (selectionMode) {
             case ConfigManager.SelectionMode.Random:
                 fileIndex = UnityEngine.Random.Range(0, files.Length);
-                // Plugin.Log.LogInfo($"Random index {fileIndex}");
                 break;
             case ConfigManager.SelectionMode.DeterministicSequential:
             default:
                 fileIndex = MonoSingleton<EndlessGrid>.Instance.currentWave % files.Length;
-                // Plugin.Log.LogInfo($"Sequential index {fileIndex}");
                 break;
         }
 
@@ -149,7 +152,6 @@ public static class ThemeChanger {
         foreach (string suffix in suffixes) {
             foreach (string ext in extensions) {
                 string path = Path.Join(searchDir, baseName + suffix + ext);
-                // Plugin.Log.LogInfo($"Check {path}");
                 if (File.Exists(path)) return path;
             }
         }
@@ -157,7 +159,7 @@ public static class ThemeChanger {
         return "";
     }
 
-    private static void ChangeSkybox(string filePath) {
+    private static async Task ChangeSkybox(string filePath) {
         Plugin.Log.LogInfo($"Skybox -> {filePath}");
         Material mat =
             ((OutdoorLightMaster)Object.FindObjectsOfType(typeof(OutdoorLightMaster))[0]).GetPrivate<Material>(
@@ -165,9 +167,10 @@ public static class ThemeChanger {
         Material mat2 =
             ((OutdoorLightMaster)Object.FindObjectsOfType(typeof(OutdoorLightMaster))[0]).GetPrivate<Material>(
                 "tempSkybox");
+        
         if (Plugin.VolumetricAvailable) VolumetricSkyboxHelper.UnloadAllVolumetricSkyboxes();
+        
         if (IsVolumetricSkybox(filePath)) {
-            // Volumetric
             try {
                 string guid = VolumetricSkyboxHelper.GuidForVolumetricSkyboxFile(filePath);
                 if (Plugin.VolumetricAvailable) VolumetricSkyboxHelper.LoadVolumetricSkybox(guid);
@@ -175,7 +178,7 @@ public static class ThemeChanger {
                 Plugin.Log.LogWarning(e);
             }
         } else {
-            Texture2D tex = FileAssetHelper.LoadTexture(filePath);
+            Texture2D tex = await FileAssetHelper.LoadTextureAsync(filePath);
             mat.mainTexture = tex;
             mat2.mainTexture = tex;
         }
@@ -183,11 +186,11 @@ public static class ThemeChanger {
         if (ConfigManager.GridSelectionMode.value == ConfigManager.SecondarySelectionMode.ClosestColorToSkybox ||
             ConfigManager.LightingEnabled.value) {
             try {
+                // TODO cache image dominant colors
                 CachedSkyboxColor = ImageUtils.GetDominantColor((Texture2D)mat.mainTexture);
             } catch (Exception e) {
+                Plugin.Log.LogWarning($"Failed to get dominant color: {e.Message}");
             }
-
-            // Plugin.Log.LogInfo($"Changed cached skybox color to {CachedSkyboxColor}");
         }
     }
 
@@ -222,16 +225,12 @@ public static class ThemeChanger {
         ChangeTechnicalGridTexture([gridSet.Base, gridSet.Top, gridSet.TopRow], "_EmissiveTex");
     }
 
-    // private static void ChangeMusicFile(string filePath) {
-    //     var musicBrowser = Object.FindObjectsOfType<CustomMusicFileBrowser>();
-    // }
-
     private static async void ChangeGrid(string skyboxFilePath) {
-        // Plugin.Log.LogInfo($"-- Changing grid. [skybox={skyboxFilePath}]");
         string targetFile;
         GridSet gridSet = new GridSet();
         targetFile = SelectMatchingFile(ConfigManager.GridDir.value, skyboxFilePath,
             GridFaceSuffixes, ImageExtensions);
+            
         if (targetFile != "") {
             gridSet = GridSet.FromSingleFile(targetFile);
         } else {
@@ -244,34 +243,30 @@ public static class ThemeChanger {
                     gridSet = GridSet.FromPrefs();
                     break;
                 case ConfigManager.SecondarySelectionMode.ClosestColorToSkybox:
-                    // var targetColor = IsVolumetricSkybox(skyboxFilePath) ? CachedSkyboxColor : ImageUtils.GetDominantColor(skyboxFilePath);
-                    // var targetColor = CachedSkyboxColor == Color.black ? ImageUtils.GetDominantColor(skyboxFilePath) : CachedSkyboxColor;
                     var targetColor = CachedSkyboxColor;
-                    // Plugin.Log.LogInfo($"Target color: {targetColor}");
+                    
+                    // WARNING: If FindClosestColorImage synchronously scans the whole folder every time, it will freeze the game!
+                    // Yielding thread control first to push the processing off the main wave-change frame tick
+                    await Task.Yield();
+                    
                     var closestImage = ImageUtils.FindClosestColorImage(targetColor, ConfigManager.GridDir.value);
-                    // Plugin.Log.LogInfo($"Closest image: {closestImage}");
                     gridSet = GridSet.FromSingleFile(closestImage);
                     break;
             }
         }
 
-        Plugin.Log.LogInfo($"Grid   -> {gridSet.Base}\n           + {gridSet.Top}\n           + {gridSet.TopRow}");
+        Plugin.Log.LogInfo($"Grid   -> {gridSet.Base}\n          + {gridSet.Top}\n          + {gridSet.TopRow}");
         ChangeGridTexture(gridSet);
     }
 
-    private static async void ChangeLighting(string skyboxFilePath) {
-        // RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
-        // RenderSettings.ambientSkyColor = CachedSkyboxColor;
-
+    private static void ChangeLighting(string skyboxFilePath) {
         var outdoorLightMaster = MonoSingleton<OutdoorLightMaster>.Instance;
         if (outdoorLightMaster == null) return;
         var lights = outdoorLightMaster.gameObject.GetComponentsInChildren<Light>()
             .Where(light => light.type == LightType.Directional)
             .ToList();
 
-
         foreach (var light in lights) {
-            // Plugin.Log.LogInfo($"LIGHT {light.name} from {light.gameObject?.name}");
             light.color = CachedSkyboxColor;
             float multiplier = (ConfigManager.LightingAdjustment.value
                 ? Math.Clamp(CachedSkyboxColor.PerceivedLightness(), 0.2f, 0.5f)
@@ -281,10 +276,9 @@ public static class ThemeChanger {
     }
 
     private static async void ChangeGlow(string skyboxFilePath) {
-        // Plugin.Log.LogInfo($"-- Changing glow. [skybox={skyboxFilePath}]");
         string targetFile = SelectMatchingFile(ConfigManager.GlowDir.value, skyboxFilePath,
             GridFaceSuffixes, ImageExtensions);
-        // Plugin.Log.LogInfo($"-- Matching target = {targetFile}");
+            
         if (targetFile == "") {
             switch (ConfigManager.GlowSelectionMode.value) {
                 case ConfigManager.MonochromeSelectionMode.Independent:
@@ -296,27 +290,6 @@ public static class ThemeChanger {
         GridSet gs = GridSet.FromSingleFile(targetFile);
         ChangeGlowTexture(gs);
     }
-
-    // public static async void ChangeMusic(string skyboxFilePath) {
-    //     string targetFile = SelectMatchingFile(ConfigManager.MusicDir.value, skyboxFilePath,
-    //         [""], AudioExtensions);
-    //     // Plugin.Log.LogInfo($"-- Matching target = {targetFile}");
-    //     if (targetFile == "") {
-    //         switch (ConfigManager.MusicSelectionMode.value) {
-    //             case ConfigManager.SecondarySelectionMode.Independent:
-    //                 targetFile = SelectFile(ConfigManager.MusicDir.value, ConfigManager.SkyboxChangeOrder.value, AudioExtensions, ConfigManager.MusicDirRecursive.value);
-    //                 break;
-    //             case ConfigManager.SecondarySelectionMode.StrictlyMatchSkyboxName:
-    //                 return;
-    //             case ConfigManager.SecondarySelectionMode.ClosestColorToSkybox:
-    //                 var targetColor = CachedSkyboxColor;
-    //                 targetFile = ImageUtils.FindClosestColorFile(targetColor, ConfigManager.GridDir.value);
-    //                 break;
-    //         }
-    //     }
-    //
-    //     ChangeMusicFile(targetFile);
-    // }
 
     private static bool FirstWaveChange = true;
     private static int wavesPassed = 0;
@@ -334,24 +307,27 @@ public static class ThemeChanger {
         string filePath = SelectSkyboxFile(ConfigManager.SkyboxDir.value, ConfigManager.SkyboxChangeOrder.value);
         if (filePath == "") return;
         Plugin.Log.LogInfo("---- New wave ----");
-        if (ConfigManager.SkyboxEnabled.value) ChangeSkybox(filePath);
+
+        // Prevent the game from stuttering exactly on theme change trigger
+        await Task.Yield();
+
+        if (ConfigManager.SkyboxEnabled.value) {
+            await ChangeSkybox(filePath);
+        }
+        
         if (ConfigManager.LightingEnabled.value) ChangeLighting(filePath);
         if (ConfigManager.GridEnabled.value) ChangeGrid(filePath);
         if (ConfigManager.GlowEnabled.value) ChangeGlow(filePath);
-        // if (ConfigManager.MusicEnabled.value) ChangeMusic(filePath);
     }
 
     public static void SetupScene() {
         FirstWaveChange = true;
-        // Add arena lighting (I realized there's a more proper way than point light)
-        // LightObj = new GameObject("SkyboxShine");
-        // LightObj.transform.position = new Vector3(0, 90, 62);
-        // LightComp = LightObj.AddComponent<Light>();
-        // LightComp.range = 1000;
+        
+        // Optional: clear directory cache when a new scene is loaded so any new images dropped in the folder update
+        DirectoryCache.Clear(); 
     }
 
     public static void SetupFirstWaveIfNecessary() {
-        // Hack to make sure we always have a CustomTextures component (it gets unloaded at some point usually)
         if (CustomTexObj == null) {
             CustomTextures customTextures = Object.FindObjectOfType<CustomTextures>();
             CustomTexObj = Object.Instantiate(customTextures.gameObject).GetComponent<CustomTextures>();
