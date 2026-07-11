@@ -24,6 +24,7 @@ public static class ThemeChanger {
     private static Light LightComp;
 
     private static Dictionary<string, string[]> DirectoryCache = new();
+    private static Dictionary<string, Color> DominantColorCache = new();
 
     private static bool IsVolumetricSkybox(string filePath) {
         return filePath.EndsWith(".cgvsb");
@@ -34,6 +35,16 @@ public static class ThemeChanger {
 
     private static readonly string[] GridFaceSuffixes =
         ["", "base", "top", "topRow", "toprow", "_base", "_top", "_topRow", "_toprow", "_BASE", "_TOP", "_TOP ROW"];
+
+    private static Color GetDominantColorCached(string cacheKey, Texture2D? tex) {
+        if (tex == null) return Color.black;
+        if (DominantColorCache.TryGetValue(cacheKey, out Color cachedColor)) {
+            return cachedColor;
+        }
+        Color dominantColor = ImageUtils.GetDominantColor(tex);
+        DominantColorCache[cacheKey] = dominantColor;
+        return dominantColor;
+    }
 
 
     private record struct GridSet {
@@ -186,8 +197,7 @@ public static class ThemeChanger {
         if (ConfigManager.GridSelectionMode.value == ConfigManager.SecondarySelectionMode.ClosestColorToSkybox ||
             ConfigManager.LightingEnabled.value) {
             try {
-                // TODO cache image dominant colors
-                CachedSkyboxColor = ImageUtils.GetDominantColor((Texture2D)mat.mainTexture);
+                CachedSkyboxColor = GetDominantColorCached(filePath, mat.mainTexture as Texture2D ?? mat2.mainTexture as Texture2D ?? null);
             } catch (Exception e) {
                 Plugin.Log.LogWarning($"Failed to get dominant color: {e.Message}");
             }
@@ -244,11 +254,7 @@ public static class ThemeChanger {
                     break;
                 case ConfigManager.SecondarySelectionMode.ClosestColorToSkybox:
                     var targetColor = CachedSkyboxColor;
-                    
-                    // WARNING: If FindClosestColorImage synchronously scans the whole folder every time, it will freeze the game!
-                    // Yielding thread control first to push the processing off the main wave-change frame tick
                     await Task.Yield();
-                    
                     var closestImage = ImageUtils.FindClosestColorImage(targetColor, ConfigManager.GridDir.value);
                     gridSet = GridSet.FromSingleFile(closestImage);
                     break;
@@ -322,9 +328,8 @@ public static class ThemeChanger {
 
     public static void SetupScene() {
         FirstWaveChange = true;
-        
-        // Optional: clear directory cache when a new scene is loaded so any new images dropped in the folder update
-        DirectoryCache.Clear(); 
+        DirectoryCache.Clear();
+        DominantColorCache.Clear();
     }
 
     public static void SetupFirstWaveIfNecessary() {

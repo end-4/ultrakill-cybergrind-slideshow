@@ -1,6 +1,6 @@
 ## 1.2.0
 
-- Improved theme switching performance
+- Optimization: reduced lag spikes and disk torturing
 - Added option to search files recursively
 - Added customization for theme switching triggers
   - Number of waves
