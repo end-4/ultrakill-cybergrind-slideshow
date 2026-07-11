@@ -3,6 +3,7 @@ using System.IO;
 using PluginConfig.API;
 using PluginConfig.API.Decorators;
 using PluginConfig.API.Fields;
+using PluginConfig.API.Functionals;
 using TMPro;
 using UnityEngine;
 
@@ -86,6 +87,12 @@ public class ConfigManager {
             "- <color=#95f857><u>Volumetric skyboxes</u></color>: Can be used, but they cause Slideshow to be inconsistent in dominant color detection & grid swapping, so they're disabled by default."
             , 13, TextAlignmentOptions.Left);
 
+        new ConfigHeader(config.rootPanel, "Quick open", 18, TextAlignmentOptions.Left);
+        var openDirs = new ButtonArrayField(config.rootPanel, "openDirButtons", 3, [0.33f, 0.33f, 0.33f], ["Skybox folder", "Grid folder", "Glow folder"], 10f);
+        openDirs.OnClickEventHandler(0).onClick += () => Application.OpenURL(SkyboxDir.value);
+        openDirs.OnClickEventHandler(1).onClick += () => Application.OpenURL(GridDir.value);
+        openDirs.OnClickEventHandler(2).onClick += () => Application.OpenURL(GlowDir.value);
+
         new ConfigHeader(config.rootPanel, "", 10);
         new ConfigHeader(config.rootPanel, "-- <color=#69fff7>GENERAL</color> --", 24);
         ThemeChangeWaveInterval = new IntField(config.rootPanel, "Change theme every x wave, where x=", "themeChangeWaveInterval", 1);
@@ -96,7 +103,7 @@ public class ConfigManager {
 
         SkyboxEnabled = new BoolField(config.rootPanel, "Change skybox", "skyboxEnabled", true);
         SkyboxDir = new StringField(config.rootPanel, "Skybox folder", "skyboxDir", SkyboxesPath);
-        SkyboxDirRecursive = new BoolField(config.rootPanel, "Consider subfolders", "skyboxDirRecursive", true);
+        SkyboxDirRecursive = new BoolField(config.rootPanel, "Consider subfolders", "skyboxDirRecursive", false);
         SkyboxChangeOrder = new EnumField<SelectionMode>(config.rootPanel, "Skybox change order", "skyboxChangeOrder",
             SelectionMode.Random);
         SkyboxAllowVolumetric =
@@ -109,7 +116,7 @@ public class ConfigManager {
         LightingEnabled = new BoolField(config.rootPanel, "Sync with skybox", "lightingEnabled", true);
         LightingIntensity = new FloatField(config.rootPanel, "Lighting intensity", "lightingIntensity", 5f);
         LightingAdjustment = new BoolField(config.rootPanel, "Adjust intensity based on lightness",
-            "lightingAdjustment", false);
+            "lightingAdjustment", true);
 
         new ConfigHeader(config.rootPanel, "", 10);
         new ConfigHeader(config.rootPanel, "-- <color=#9c87f4>GRID</color> --", 24);

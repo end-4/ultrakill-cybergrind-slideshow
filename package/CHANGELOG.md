@@ -2,6 +2,7 @@
 
 - Optimization: reduced lag spikes and disk torturing
 - Added option to search files recursively
+- Added quick folder open buttons
 - Added customization for theme switching triggers
   - Number of waves
   - Allow switching after a music track ends

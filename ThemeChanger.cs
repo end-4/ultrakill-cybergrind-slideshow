@@ -117,7 +117,7 @@ public static class ThemeChanger {
             files = Directory.EnumerateFiles(folderPath, "*.*", searchOption)
                 .Where(file => allowedExtensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
                 .ToArray();
-            
+
             DirectoryCache[cacheKey] = files;
         }
 
@@ -178,9 +178,9 @@ public static class ThemeChanger {
         Material mat2 =
             ((OutdoorLightMaster)Object.FindObjectsOfType(typeof(OutdoorLightMaster))[0]).GetPrivate<Material>(
                 "tempSkybox");
-        
+
         if (Plugin.VolumetricAvailable) VolumetricSkyboxHelper.UnloadAllVolumetricSkyboxes();
-        
+
         if (IsVolumetricSkybox(filePath)) {
             try {
                 string guid = VolumetricSkyboxHelper.GuidForVolumetricSkyboxFile(filePath);
@@ -240,7 +240,7 @@ public static class ThemeChanger {
         GridSet gridSet = new GridSet();
         targetFile = SelectMatchingFile(ConfigManager.GridDir.value, skyboxFilePath,
             GridFaceSuffixes, ImageExtensions);
-            
+
         if (targetFile != "") {
             gridSet = GridSet.FromSingleFile(targetFile);
         } else {
@@ -275,7 +275,7 @@ public static class ThemeChanger {
         foreach (var light in lights) {
             light.color = CachedSkyboxColor;
             float multiplier = (ConfigManager.LightingAdjustment.value
-                ? Math.Clamp(CachedSkyboxColor.PerceivedLightness(), 0.2f, 0.5f)
+                ? (1f + (1f - 0.6f) * CachedSkyboxColor.PerceivedLightness())
                 : 1);
             light.intensity = ConfigManager.LightingIntensity.value * multiplier;
         }
@@ -284,7 +284,7 @@ public static class ThemeChanger {
     private static async void ChangeGlow(string skyboxFilePath) {
         string targetFile = SelectMatchingFile(ConfigManager.GlowDir.value, skyboxFilePath,
             GridFaceSuffixes, ImageExtensions);
-            
+
         if (targetFile == "") {
             switch (ConfigManager.GlowSelectionMode.value) {
                 case ConfigManager.MonochromeSelectionMode.Independent:
@@ -320,7 +320,7 @@ public static class ThemeChanger {
         if (ConfigManager.SkyboxEnabled.value) {
             await ChangeSkybox(filePath);
         }
-        
+
         if (ConfigManager.LightingEnabled.value) ChangeLighting(filePath);
         if (ConfigManager.GridEnabled.value) ChangeGrid(filePath);
         if (ConfigManager.GlowEnabled.value) ChangeGlow(filePath);
