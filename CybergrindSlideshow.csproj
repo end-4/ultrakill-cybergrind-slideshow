@@ -20,6 +20,12 @@
       <Reference Include="BepInEx">
         <HintPath>libs\Managed\BepInEx.dll</HintPath>
       </Reference>
+      <Reference Include="Jukebox">
+        <HintPath>libs\Managed\Jukebox.dll</HintPath>
+      </Reference>
+      <Reference Include="JukeboxCore">
+        <HintPath>libs\Managed\JukeboxCore.dll</HintPath>
+      </Reference>
       <Reference Include="Notiffy">
         <HintPath>libs\Managed\Notiffy.dll</HintPath>
       </Reference>

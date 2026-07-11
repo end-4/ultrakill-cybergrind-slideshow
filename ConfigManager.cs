@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using PluginConfig.API;
 using PluginConfig.API.Decorators;
@@ -37,6 +38,7 @@ public class ConfigManager {
     private static PluginConfigurator config;
 
     public static IntField ThemeChangeWaveInterval;
+    public static BoolField ThemeChangeWhenMusicChanges;
 
     public static BoolField SkyboxEnabled;
     public static StringField SkyboxDir;
@@ -73,7 +75,6 @@ public class ConfigManager {
         config = PluginConfigurator.Create("Cybergrind Slideshow", Plugin.PluginGUID);
         string iconPath = Path.Combine(Plugin.workingDir, "icon.png");
         if (File.Exists(iconPath)) config.SetIconWithURL(iconPath);
-
         new ConfigHeader(config.rootPanel, "", 10);
         new ConfigHeader(config.rootPanel, "-- <color=#95f857>USAGE NOTES</color> --", 24);
         new ConfigHeader(config.rootPanel,
@@ -88,6 +89,7 @@ public class ConfigManager {
         new ConfigHeader(config.rootPanel, "", 10);
         new ConfigHeader(config.rootPanel, "-- <color=#69fff7>GENERAL</color> --", 24);
         ThemeChangeWaveInterval = new IntField(config.rootPanel, "Change theme every x wave, where x=", "themeChangeWaveInterval", 1);
+        ThemeChangeWhenMusicChanges = new BoolField(config.rootPanel, "Change theme when music changes", "themeChangeWhenMusicChanges", false);
 
         new ConfigHeader(config.rootPanel, "", 10);
         new ConfigHeader(config.rootPanel, "-- <color=#55bcec>SKYBOX</color> --", 24);

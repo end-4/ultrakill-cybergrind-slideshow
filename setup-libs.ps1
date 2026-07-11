@@ -72,6 +72,8 @@ $r2Dlls = @(
     "BepInEx\plugins\end_4-Notiffy\Notiffy\Notiffy.xml"
     "BepInEx\plugins\Flazhik-VolumetricSkyboxes\VolumetricSkyboxes\VolumetricSkyboxes.dll"
     "BepInEx\plugins\Flazhik-VolumetricSkyboxes\VolumetricSkyboxes\VolumetricSkyboxesScripts.dll"
+    "BepInEx\plugins\Flazhik-CybergrindMusicExplorer\Jukebox\JukeboxCore.dll"
+    "BepInEx\plugins\Flazhik-CybergrindMusicExplorer\Jukebox\Jukebox.dll"
 )
 
 foreach ($dll in $r2Dlls) {

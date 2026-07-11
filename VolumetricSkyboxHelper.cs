@@ -7,7 +7,7 @@ using ReflectionUtils = NukeLib.Reflection.ReflectionUtils;
 namespace CybergrindSlideshow;
 
 /// <summary>
-/// Everything volumetric related is proxied through here so it works as a soft dependency
+/// Everything Volumetric-related is proxied through here so it works as a soft dependency
 /// </summary>
 public static class VolumetricSkyboxHelper {
     public static void UnloadAllVolumetricSkyboxes() {

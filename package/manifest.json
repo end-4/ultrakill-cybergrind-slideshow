@@ -1,7 +1,7 @@
 {
     "name": "CybergrindSlideshow",
     "author": "end_4",
-    "version_number": "1.1.1",
+    "version_number": "1.2.0",
     "website_url": "https://github.com/end-4/ultrakill-cybergrind-slideshow",
     "description": "Changes the CG theme every wave for a fresher and more immersive experience. Works with Volumetric Skyboxes.",
     "dependencies": [

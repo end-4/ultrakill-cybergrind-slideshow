@@ -23,10 +23,11 @@ public class Plugin : BaseUnityPlugin {
     public static string workingDir = Path.GetDirectoryName(workingPath);
     public const string PluginGUID = "com.github.end-4.cybergrindSlideshow";
     public const string PluginName = "CybergrindSlideshow";
-    public const string PluginVersion = "1.1.1";
+    public const string PluginVersion = "1.2.0";
 
     // Volumetric skyboxes soft dep
     internal static bool VolumetricAvailable = false;
+    internal static bool JukeboxAvailable = false;
 
     private void Awake() {
         Log = Logger;
@@ -44,7 +45,15 @@ public class Plugin : BaseUnityPlugin {
 
     private void Start() {
         if (Chainloader.PluginInfos.ContainsKey("dev.flazhik.volumetric-skyboxes")) VolumetricAvailable = true;
+        if (Chainloader.PluginInfos.ContainsKey("dev.flazhik.jukebox")) JukeboxAvailable = true;
         Plugin.Log.LogInfo($"Volumetric available: {VolumetricAvailable}");
+        Plugin.Log.LogInfo($"Jukebox available: {JukeboxAvailable}");
+        PlaylistListener.Initialize();
+    }
+
+    private void Update() {
+        if (SceneHelper.CurrentScene != "Endless") return;
+        PlaylistListener.OnUpdate();
     }
 
     [HarmonyPatch(typeof(EndlessGrid))]
@@ -58,7 +67,6 @@ public class Plugin : BaseUnityPlugin {
             }
         }
         public static void Postfix() {
-            Log.LogInfo("Cycling stuff");
             ThemeChanger.ChangeTheme();
         }
     }

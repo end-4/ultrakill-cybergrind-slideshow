@@ -1,6 +1,9 @@
 ## 1.2.0
 
 - Added option to search files recursively
+- Added customization for theme switching triggers
+  - Number of waves
+  - Allow switching after a music track ends
 
 ## 1.1.1
 
